@@ -148,10 +148,16 @@ jobs:
         with:
           token: ${{ secrets.GH_PAT }}
 
-      - run: sudo apt-get update && sudo apt-get install -y yq
+      - name: Install yq (pinned version)
+        run: |
+          YQ_VERSION=v4.44.1
+          wget https://github.com/mikefarah/yq/releases/download/${YQ_VERSION}/yq_linux_amd64 -O /usr/local/bin/yq
+          chmod +x /usr/local/bin/yq
+          yq --version
 
-      - run: |
-          yq e -i '.image.tag = "${{ needs.docker.outputs.release_tag }}"' helm/go-static-app/values.yaml
+      - name: Update image tag in values.yaml
+        run: |
+          yq e -i -y '.image.tag = "${{ needs.docker.outputs.release_tag }}"' helm/go-static-app/values.yaml
 
       - name: Commit the updated values.yaml
         run: |
